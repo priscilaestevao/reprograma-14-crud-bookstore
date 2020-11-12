@@ -1,5 +1,4 @@
-const books = require("../models/livros.json");
-const fs = require("fs");
+const books = require("../models/livros.js");
 
 const getAllBooks = (req, res) => {
   res.status(200).send(books);

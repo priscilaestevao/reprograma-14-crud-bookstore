@@ -1,13 +1,30 @@
-const employees = require("../models/funcionarios.json");
-const fs = require("fs");
+const employees = require("../models/funcionarios.js");
 
 const getAllEmployees = (req, res) => {
-  res.status(200).send(employees);
+  employees.find((err, employees) => {
+    if (err) {
+      res.status(424).send({ message: err });
+    } else {
+      res.status(200).send(employees);
+    }
+  });
 };
 
-const getEmployeeById = (req, res) => {
+const employeeById = (req, res) => {
   const id = req.params.id;
-  res.status(200).send(employees.find((employee) => employee.id == id));
+  employees.find(
+    { id },
+    { nome: 1, sobrenome: 1, funcao: 1, _id: 0 },
+    (err, employee) => {
+      if (err) {
+        res.status(424).send({ message: err.message });
+      } else if (employee.length > 0) {
+        res.status(200).send(employee);
+      } else {
+        res.status(404).send({ message: "Employee not found." });
+      }
+    }
+  );
 };
 
 const getEmployeeList = (req, res) => {
@@ -28,97 +45,55 @@ const getEmployeeAge = (req, res) => {
   });
 };
 
-const postEmployee = (req, res) => {
-  const id = employees[employees.length - 1].id + 1;
-  const employee = req.body;
-  const newEmployee = { id, ...employee };
-  employees.push(newEmployee);
-
-  fs.writeFile(
-    "./src/models/funcionarios.json",
-    JSON.stringify(employees),
-    "utf8",
-    (err) => {
-      if (err) {
-        return res.status(424).send({ menssage: err });
-      }
-      console.log("Arquivo atualizado com sucesso!");
-    }
-  );
-  res.status(202).send(employees);
-};
-
-deleteEmployee = (req, res) => {
-  const id = req.params.id;
-  const filteredEmployee = employees.find(
-    (foundEmployee) => foundEmployee.id == id
-  );
-  const index = employees.indexOf(filteredEmployee);
-  employees.splice(index, 1);
-
-  fs.writeFile(
-    "./src/models/funcionarios.json",
-    JSON.stringify(employees),
-    "utf8",
-    (err) => {
-      if (err) {
-        return res.status(424).send({ message: err });
-      }
-      console.log("Arquivo deletado com sucesso!");
-    }
-  );
-  res.status(201).send(employees);
-};
-
-putEmployee = (req, res) => {
-  const id = req.params.id;
-  const employeeUpdate = req.body;
-
-  try {
-    const employeeToUpdate = employees.find(
-      (employeeFound) => employeeFound.id == id
-    );
-    const index = employees.indexOf(employeeToUpdate);
-    employees.splice(index, 1, employeeUpdate);
-
-    fs.writeFile(
-      "./src/models/funcionarios.json",
-      JSON.stringify(employees),
-      "utf8",
-      (err) => {
+const registerEmployee = (req, res) => {
+  employees.countDocuments((err, count) => {
+    if (err) {
+      res.status(424).send({ message: err.message });
+    } else {
+      let employee = new employees(req.body);
+      employee.id = count + 1;
+      employee.save((err) => {
         if (err) {
-          return res.status(424).send({ message: err });
+          res.status(424).send({ message: err.message });
+        } else {
+          res.status(201).send({
+            status: true,
+            message: "Employee successfully included!",
+          });
         }
-        console.log("Arquivo atualizado com sucesso!");
-      }
-    );
-  } catch (err) {
-    return res.status(500).send({ message: err });
-  }
+      });
+    }
+  });
 };
 
-const patchEmployee = (req, res) => {
+const deleteEmployee = (req, res) => {
   const id = req.params.id;
-  const employeeUpdate = req.body;
+  employees.deleteMany({ id }, (err) => {
+    if (err) {
+      res.status(424).send({ message: err.message });
+    } else {
+      res.status(200).send({ message: "Employee deleted successfully!" });
+    }
+  });
+};
 
-  try {
-    const employeeToUpdate = employees.find((employeeFound) => employeeFound.id == id);
-    Object.keys(employeeUpdate).forEach((key) => {
-      employeeToUpdate[key] = employeeUpdate[key];
-    });
-    return res.status(200).send(employees);
-  } catch (err) {
-    return res.status(424).send({ message: err });
-  }
+const updateEmployee = (req, res) => {
+  const id = req.params.id;
+  employees.updateMany({ id }, { $set: req.body }, { upsert: true }, (err) => {
+    if (err) {
+      res.status(424).send({ message: err.message });
+    } else {
+      res.status(200).send({ message: "Employee updated successfully!" });
+    }
+  });
 };
 
 module.exports = {
   getAllEmployees,
-  getEmployeeById,
+  employeeById,
   getEmployeeAge,
   getEmployeeList,
-  postEmployee,
+  registerEmployee,
   deleteEmployee,
-  putEmployee,
-  patchEmployee
+  updateEmployee,
 };
