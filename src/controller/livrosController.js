@@ -1,119 +1,70 @@
 const books = require("../models/livros.js");
 
-const getAllBooks = (req, res) => {
-  res.status(200).send(books);
-};
-
-const getBookById = (req, res) => {
-  const id = req.params.id;
-  res.status(200).send(books.find((book) => book.id == id));
-};
-
-const getBooksStock = (req, res) => {
-  const booksStock = books.filter(
-    (booksAvaiable) => booksAvaiable.estoque == true
-  );
-  res.status(200).send(booksStock);
-};
-
-const postBook = (req, res) => {
-  const id = books[books.length - 1].id + 1;
-  const book = req.body;
-  const newBook = {
-    id,
-    ...book,
-  };
-  books.push(newBook);
-
-  fs.writeFile(
-    "./src/models/livros.json",
-    JSON.stringify(books),
-    "utf8",
-    (err) => {
-      if (err) {
-        return res.status(424).send({
-          message: err,
-        });
-      }
-      console.log("Arquivo atualizado com sucesso!");
+const allBooks = (req, res) => {
+  books.find((err, books) => {
+    if (err) {
+      return res.status(424).send({ message: err });
     }
-  );
-  res.status(201).send(books);
+    res.status(200).send(books);
+  });
+};
+
+const bookById = (req, res) => {
+  const id = req.params.id;
+  books.find({ id }, { titulo: 1, autora: 1, _id: 0 }, (err, book) => {
+    if (err) {
+      return res.status(424).send({ message: err.message });
+    } else if (book.length > 0) {
+      return res.status(200).send(book);
+    }
+    res.status(404).send({ message: "Book not found." });
+  });
+};
+
+const registerBook = (req, res) => {
+  books.countDocuments((err, count) => {
+    if (err) {
+      return res.status(424).send({ message: err.message });
+    } else {
+      let book = new books(req.body);
+      book.id = count + 1;
+      book.save((err) => {
+        if (err) {
+          return res.status(424).send({ message: err.message });
+        }
+        res.status(201).send({
+          status: true,
+          message: "Book saved successfully!",
+        });
+      });
+    }
+  });
 };
 
 const deleteBook = (req, res) => {
   const id = req.params.id;
-  const filteredBook = books.find((foundBook) => foundBook.id == id);
-  const index = books.indexOf(filteredBook);
-  books.splice(index, 1);
-
-  fs.writeFile(
-    "./src/models/livros.json",
-    JSON.stringify(books),
-    "utf8",
-    (err) => {
-      if (err) {
-        return res.status(424).send({
-          message: err,
-        });
-      }
-      console.log("Arquivo deletado com sucesso!");
+  books.deleteMany({ id }, (err) => {
+    if (err) {
+      return res.status(424).send({ message: err.message });
     }
-  );
-  res.status(201).send(books);
+    res.status(200).send({ message: "Book deleted successfully!" });
+  });
 };
 
-const putBook = (req, res) => {
+const updateBook = (req, res) => {
   const id = req.params.id;
-  const bookUpdate = req.body;
-
-  try {
-    const bookToUpdate = books.find((bookFound) => bookFound.id == id);
-    const index = books.indexOf(bookToUpdate);
-    books.splice(index, 1, bookUpdate);
-
-    fs.writeFile(
-      "./src/models/livros.json",
-      JSON.stringify(books),
-      "utf8",
-      (err) => {
-        if (err) {
-          return res.status(424).send({
-            message: err,
-          });
-        }
-        console.log("Arquivo atualizado com sucesso!");
-      }
-    );
-    res.status(200).send(books);
-  } catch (err) {
-    return res.status(500).send({
-      message: err,
-    });
-  }
-};
-
-const patchBook = (req, res) => {
-  const id = req.params.id;
-  const bookUpdate = req.body;
-
-  try {
-    const bookToUpdate = books.find((bookFound) => bookFound.id == id);
-    Object.keys(bookUpdate).forEach((key) => {
-      bookToUpdate[key] = bookUpdate[key];
-    });
-    return res.status(200).send(books);
-  } catch (err) {
-    return res.status(424).send({ message: err });
-  }
+  books.updateMany({ id }, { $set: req.body }, { upsert: true }, (err) => {
+    if (err) {
+      return res.status(424).send({ message: err.message });
+    }
+    res.status(200).send({ message: "Book updated successfully!" });
+  });
 };
 
 module.exports = {
-  getAllBooks,
-  getBookById,
-  getBooksStock,
-  postBook,
+  allBooks,
+  bookById,
+  registerBook,
   deleteBook,
-  putBook,
-  patchBook,
+  updateBook,
 };
