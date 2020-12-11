@@ -1,6 +1,7 @@
 <h1 align="center">
-  <img src="public/images/Library-bro.png" alt="duas mulheres numa livraria sentadas numa mesa" width="300">
+  <img src="public/images/Library-cuate.png" alt="duas mulheres numa livraria sentadas numa mesa" width="300">
 <p align="center">CRUD de livraria integrado com o MongoDB<p>
+</h1>
 
 Você foi contratada para fazer a implementação de um sistema de uma livraria no centro de Recife.
 
@@ -17,3 +18,7 @@ Você foi contratada para fazer a implementação de um sistema de uma livraria 
 6 - Eles também adorariam ter acesso a uma lista com todos os funcionários.
 
 8 - A livaria gostaria de ter acesso a idade de um funcionário, de acordo com seu id.
+
+## Repositório da aula da semana
+
+[reprograma/on7-porto-s14-projeto](https://github.com/reprograma/on7-porto-s14-projeto)
